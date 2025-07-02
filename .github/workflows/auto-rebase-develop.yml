@@ -74,21 +74,6 @@ jobs:
         run: |
           echo "map=$(cat .github/slack-map.json | jq -c .)" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub issue when conflict
-        if: env.REBASE_EXIT_CODE != '0'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const author = `${{ steps.pr_creator.outputs.pr_creator }}`
-            const message = `⚠️ Conflict detected when rebasing \`develop\` onto \`main\`.\nCaused by: **@${author}**.\n\nPlease resolve manually:\n\n1️⃣ Checkout \`develop\`.\n2️⃣ \`git fetch && git rebase origin/main\`.\n3️⃣ Resolve conflicts.\n4️⃣ Commit and push to \`develop\`.\n\nThank you!`
-
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: "Conflict when rebasing develop",
-              body: message
-            })
-
       - name: Send Slack notification
         if: env.REBASE_EXIT_CODE != '0'
         uses: slackapi/slack-github-action@v1.25.0
