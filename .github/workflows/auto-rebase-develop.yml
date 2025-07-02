@@ -1,0 +1,72 @@
+name: Auto Rebase Develop
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  rebase-develop:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch branches
+        run: |
+          git fetch origin develop
+          git checkout develop
+
+      - name: Rebase develop onto main
+        id: rebase
+        run: |
+          set +e
+          git rebase origin/main
+          echo "REBASE_EXIT_CODE=$?" >> $GITHUB_ENV
+          set -e
+
+      - name: Push changes if rebase successful
+        if: env.REBASE_EXIT_CODE == '0'
+        run: |
+          git push origin develop
+
+      - name: Get last commit author on main
+        if: env.REBASE_EXIT_CODE != '0'
+        id: author
+        run: |
+          AUTHOR="$(git log origin/main -1 --pretty=format:'%an <%ae>')"
+          echo "author=$AUTHOR" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub issue when conflict
+        if: env.REBASE_EXIT_CODE != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const author = `${{ steps.author.outputs.author }}`
+            const message = `⚠️ Conflict detected when rebasing \`develop\` onto \`main\`.\nCaused by: **${author}**.\nPlease resolve conflicts manually.`
+            await github.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Conflict when rebasing develop",
+              body: message
+            })
+
+      - name: Send Slack notification (optional)
+        if: env.REBASE_EXIT_CODE != '0'
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "⚠️ *Conflict when rebasing develop onto main!*\nCaused by: *${{ steps.author.outputs.author }}*\nPlease check GitHub issue for details."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
