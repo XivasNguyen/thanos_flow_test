@@ -68,13 +68,11 @@ jobs:
               core.setOutput('pr_creator', prCreator)
             }
 
-      - name: Read slack mapping JSON
+      - name: Read Slack map JSON
         if: env.REBASE_EXIT_CODE != '0'
-        id: slack_map
+        id: read_slack_map
         run: |
-          echo "SLACK_MAP<<EOF" >> $GITHUB_ENV
-          cat .github/slack-map.json >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "map=$(cat .github/slack-map.json | jq -c .)" >> $GITHUB_OUTPUT
 
       - name: Create GitHub issue when conflict
         if: env.REBASE_EXIT_CODE != '0'
@@ -97,7 +95,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "⚠️ *Conflict when rebasing develop onto main!*\nResponsible: <@${{ fromJson(env.SLACK_MAP)[steps.pr_creator.outputs.pr_creator] }}>.\nPlease resolve manually:\n1️⃣ Checkout *develop*\n2️⃣ Run: `git fetch && git rebase origin/main`\n3️⃣ Resolve conflicts, commit & push."
+              "text": "⚠️ *Conflict when rebasing develop onto main!*\nResponsible: <@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>.\nPlease resolve manually:\n1️⃣ Checkout *develop*\n2️⃣ Run: `git fetch && git rebase origin/main`\n3️⃣ Resolve conflicts, commit & push."
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
