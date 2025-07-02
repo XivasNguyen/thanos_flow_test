@@ -72,5 +72,4 @@ jobs:
             • Merge `main` into it
             • Resolve conflicts, commit, push
             • Open PR from `resolve-conflict` to `develop`
-          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
