@@ -62,6 +62,7 @@ jobs:
         with:
           payload: |
             {
+              "text": ":warning: Conflict detected when rebasing develop onto main!",
               "blocks": [
                 {
                   "type": "header",
@@ -75,7 +76,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*<@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>* bạn là người merge PR vào *main* gây conflict khi auto rebase vào *develop*."
+                    "text": "*<@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>*, you merged a PR into *main* that caused a conflict when auto-rebasing into *develop*."
                   }
                 },
                 {
@@ -85,7 +86,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":point_right: *Hãy resolve conflict theo các bước sau:*\n```bash\n# 1. Đảm bảo branch develop mới nhất\n git checkout develop && git pull origin develop\n\n# 2. Tạo branch tạm\n git checkout -b resolve-conflict\n\n# 3. Merge main vào nhánh này\n git merge origin/main\n\n# 4. Resolve conflict, commit & push\n git add .\n git commit -m \"Resolve conflict: merge main into develop\"\n git push origin resolve-conflict\n\n# 5. Mở PR từ resolve-conflict vào develop để mọi người review và merge\n```\nSau khi merge xong, auto rebase sẽ tự động hoạt động trở lại! :rocket:"
+                    "text": "*How to resolve:*\n```bash\n# 1. Checkout develop and pull latest\n git checkout develop && git pull origin develop\n\n# 2. Create a temp branch\n git checkout -b resolve-conflict\n\n# 3. Merge main into this branch\n git merge origin/main\n\n# 4. Resolve conflicts, commit, and push\n git add .\n git commit -m \"Resolve conflict: merge main into develop\"\n git push origin resolve-conflict\n\n# 5. Open a PR from resolve-conflict to develop for review and merge\n```\nOnce merged, auto-rebase will work again! :rocket:"
                   }
                 }
               ]
