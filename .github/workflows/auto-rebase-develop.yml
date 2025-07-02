@@ -58,54 +58,19 @@ jobs:
 
       - name: Send Slack notification
         if: env.REBASE_EXIT_CODE != '0'
-        uses: slackapi/slack-github-action@v1.25.0
+        uses: slackapi/slack-github-action@v2.1.0
         with:
           payload: |
-            {
-              "text": ":rotating_light: Conflict detected when rebasing develop onto main!",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "🚨 Conflict Alert!",
-                    "emoji": true
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "👤 *<@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>*, your PR to *main* caused a conflict with *develop*."
-                  }
-                },
-                {
-                  "type": "context",
-                  "elements": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "⚡ *Action needed*: Please resolve it ASAP to keep automation working! 🚀"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "🔗 *PR link*: <${{ github.event.pull_request.html_url }}|Click here to view your PR>"
-                  }
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "👉 *How to fix it:*\n• Checkout `develop`, pull latest\n• Create branch `resolve-conflict`\n• Merge `main` into it\n• Resolve conflicts, commit, push\n• Open PR from `resolve-conflict` to `develop`"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+            🚨 *Conflict Alert!*
+            👤 <@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>, your PR to *main* caused a conflict with *develop*.
+            ⚡ *Action needed*: Please resolve it ASAP! 🚀
+            🔗 *PR link*: <${{ github.event.pull_request.html_url }}|Click here to view your PR>
+
+            👉 *How to fix it:*
+            • Checkout `develop`, pull latest
+            • Create branch `resolve-conflict`
+            • Merge `main` into it
+            • Resolve conflicts, commit, push
+            • Open PR from `resolve-conflict` to `develop`
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
