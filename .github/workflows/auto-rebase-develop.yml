@@ -60,17 +60,6 @@ jobs:
         if: env.REBASE_EXIT_CODE != '0'
         uses: slackapi/slack-github-action@v2.1.0
         with:
-          payload: |
-            🚨 *Conflict Alert!*
-            👤 <@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>, your PR to *main* caused a conflict with *develop*.
-            ⚡ *Action needed*: Please resolve it ASAP! 🚀
-            🔗 *PR link*: <${{ github.event.pull_request.html_url }}|Click here to view your PR>
-
-            👉 *How to fix it:*
-            • Checkout `develop`, pull latest
-            • Create branch `resolve-conflict`
-            • Merge `main` into it
-            • Resolve conflicts, commit, push
-            • Open PR from `resolve-conflict` to `develop`
+          payload: "🚨 *Conflict Alert!*\n👤 <@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>, your PR to *main* caused a conflict with *develop*.\n⚡ *Action needed*: Please resolve it ASAP! 🚀\n🔗 *PR link*: <${{ github.event.pull_request.html_url }}|Click here to view your PR>\n\n👉 *How to fix it:*\n• Checkout `develop`, pull latest\n• Create branch `resolve-conflict`\n• Merge `main` into it\n• Resolve conflicts, commit, push\n• Open PR from `resolve-conflict` to `develop`"
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
