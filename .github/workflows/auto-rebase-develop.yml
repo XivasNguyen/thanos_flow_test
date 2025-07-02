@@ -60,7 +60,7 @@ jobs:
         if: env.REBASE_EXIT_CODE != '0'
         uses: slackapi/slack-github-action@v2.1.0
         with:
-          payload-file-path: .github/slack-message.md
+          payload-file-path: .github/slack-message.json
           payload-templated: true
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook

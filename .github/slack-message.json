@@ -1,0 +1,44 @@
+{
+  "text": ":rotating_light: Conflict detected when rebasing develop onto main!",
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "🚨 Conflict Alert!",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "👤 <@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>, your PR to *main* caused a conflict with *develop*."
+      }
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": "⚡ *Action needed*: Please resolve it ASAP to keep automation working! 🚀"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "🔗 *PR link*: <${{ github.event.pull_request.html_url }}|Click here to view your PR>"
+      }
+    },
+    { "type": "divider" },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "👉 *How to fix it:*\n• Checkout `develop`, pull latest\n• Create branch `resolve-conflict`\n• Merge `main` into it\n• Resolve conflicts, commit, push\n• Open PR from `resolve-conflict` to `develop`"
+      }
+    }
+  ]
+}
