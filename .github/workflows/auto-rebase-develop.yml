@@ -56,13 +56,14 @@ jobs:
         run: |
           echo "map=$(cat .github/slack-map.json | jq -c .)" >> $GITHUB_OUTPUT
 
-      - name: Send Slack notification
+      - name: Send main Slack notification
         if: env.REBASE_EXIT_CODE != '0'
+        id: slack_main
         uses: slackapi/slack-github-action@v1.25.0
         with:
           payload: |
             {
-              "text": ":warning: Conflict detected when rebasing develop onto main!",
+              "text": ":warning: Conflict detected when rebasing develop onto main!\n<@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>, you just merged a PR into *main* that caused a conflict with *develop*.",
               "blocks": [
                 {
                   "type": "header",
@@ -76,17 +77,28 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*<@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>*, you merged a PR into *main* that caused a conflict when auto-rebasing into *develop*."
+                    "text": "<@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>, you just merged a PR into *main* that caused a conflict with *develop* :warning:"
                   }
-                },
-                {
-                  "type": "divider"
-                },
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send guide as thread reply
+        if: env.REBASE_EXIT_CODE != '0'
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "How to resolve conflict (steps below) :hammer_and_wrench:",
+              "thread_ts": "${{ steps.slack_main.outputs.ts }}",
+              "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*How to resolve:*\n```bash\n# 1. Checkout develop and pull latest\n git checkout develop && git pull origin develop\n\n# 2. Create a temp branch\n git checkout -b resolve-conflict\n\n# 3. Merge main into this branch\n git merge origin/main\n\n# 4. Resolve conflicts, commit, and push\n git add .\n git commit -m \"Resolve conflict: merge main into develop\"\n git push origin resolve-conflict\n\n# 5. Open a PR from resolve-conflict to develop for review and merge\n```\nOnce merged, auto-rebase will work again! :rocket:"
+                    "text": "*:hammer_and_wrench: What to do next:*\n\n:one: *Checkout develop and pull latest*\n```git checkout develop && git pull origin develop```\n:two: *Create a temp branch*\n```git checkout -b resolve-conflict```\n:three: *Merge main into this branch*\n```git merge origin/main```\n:four: *Resolve conflicts, commit & push*\n```git add .\ngit commit -m \"Resolve conflict: merge main into develop\"\ngit push origin resolve-conflict```\n:five: *Open a PR from `resolve-conflict` to `develop`*\n\n:tada: *Once merged, auto-rebase will work again!* :rocket:"
                   }
                 }
               ]
