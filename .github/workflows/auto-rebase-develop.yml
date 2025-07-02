@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   rebase-develop:
     runs-on: ubuntu-latest
@@ -20,7 +24,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Fetch branches
+      - name: Fetch develop branch
         run: |
           git fetch origin develop
           git checkout develop
@@ -38,20 +42,47 @@ jobs:
         run: |
           git push origin develop
 
-      - name: Get last commit author on main
+      - name: Get PR creator from last commit on main
         if: env.REBASE_EXIT_CODE != '0'
-        id: author
+        id: pr_creator
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commitSha = (await github.rest.repos.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'main'
+            })).data.sha
+
+            const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: commitSha
+            })
+
+            if (prs.data.length === 0) {
+              core.setFailed('❌ No PR found for last commit.')
+            } else {
+              const prCreator = prs.data[0].user.login
+              console.log(`PR creator login: ${prCreator}`)
+              core.setOutput('pr_creator', prCreator)
+            }
+
+      - name: Read slack mapping JSON
+        if: env.REBASE_EXIT_CODE != '0'
+        id: slack_map
         run: |
-          AUTHOR="$(git log origin/main -1 --pretty=format:'%an <%ae>')"
-          echo "author=$AUTHOR" >> $GITHUB_OUTPUT
+          echo "SLACK_MAP<<EOF" >> $GITHUB_ENV
+          cat .github/slack-map.json >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Create GitHub issue when conflict
         if: env.REBASE_EXIT_CODE != '0'
         uses: actions/github-script@v7
         with:
           script: |
-            const author = `${{ steps.author.outputs.author }}`
-            const message = `⚠️ Conflict detected when rebasing \`develop\` onto \`main\`.\nCaused by: **${author}**.\nPlease resolve conflicts manually.`
+            const author = `${{ steps.pr_creator.outputs.pr_creator }}`
+            const message = `⚠️ Conflict detected when rebasing \`develop\` onto \`main\`.\nCaused by: **@${author}**.\n\nPlease resolve manually:\n\n1️⃣ Checkout \`develop\`.\n2️⃣ \`git fetch && git rebase origin/main\`.\n3️⃣ Resolve conflicts.\n4️⃣ Commit and push to \`develop\`.\n\nThank you!`
 
             await github.rest.issues.create({
               owner: context.repo.owner,
@@ -60,13 +91,13 @@ jobs:
               body: message
             })
 
-      - name: Send Slack notification (optional)
+      - name: Send Slack notification
         if: env.REBASE_EXIT_CODE != '0'
         uses: slackapi/slack-github-action@v1.25.0
         with:
           payload: |
             {
-              "text": "⚠️ *Conflict when rebasing develop onto main!*\nCaused by: *${{ steps.author.outputs.author }}*\nPlease check GitHub issue for details."
+              "text": "⚠️ *Conflict when rebasing develop onto main!*\nResponsible: <@${{ fromJson(env.SLACK_MAP)[steps.pr_creator.outputs.pr_creator] }}>.\nPlease resolve manually:\n1️⃣ Checkout *develop*\n2️⃣ Run: `git fetch && git rebase origin/main`\n3️⃣ Resolve conflicts, commit & push."
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
