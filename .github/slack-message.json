@@ -13,7 +13,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "👤 <@${{ fromJson(steps.read_slack_map.outputs.map)[steps.pr_creator.outputs.pr_creator] }}>, your PR to *main* caused a conflict with *develop*."
+        "text": "👤 <@${{ env.SLACK_USER_ID }}>, your PR to *main* caused a conflict with *develop*."
       }
     },
     {
@@ -29,7 +29,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "🔗 *PR link*: <${{ github.event.pull_request.html_url }}|Click here to view your PR>"
+        "text": "🔗 *PR link*: <${{ env.PR_LINK }}|Click here to view your PR>"
       }
     },
     { "type": "divider" },
